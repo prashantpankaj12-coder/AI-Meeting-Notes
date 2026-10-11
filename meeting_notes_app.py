@@ -35,25 +35,28 @@ if st.button("Analyze meeting", type="primary"):
 	if not transcript.strip():
 		st.warning("Please paste a transcript first.")
 	else:
-		with st.spinner("Agents are working..."):
-			result = load_graph().invoke({"transcript": transcript})
-
-		st.subheader("Meeting Summary")
-		st.write(result["summary"])
-
-		st.subheader("Key Topics")
-		for n, topic in enumerate(result["topics"], 1):
-			st.write(f"{n}. {topic}")
-
-		st.subheader("Action Items and Owners")
-		if result["action_items"]:
-			st.table(result["action_items"])
-			level = result["priority"]
-			st.subheader("Priority Level")
-			{"High Priority": st.error, "Medium Priority": st.warning, "Low Priority": st.success}[level](level)
-			st.caption(result["priority_reason"])
+		try:
+			with st.spinner("Agents are working..."):
+				result = load_graph().invoke({"transcript": transcript})
+		except ValueError as error:
+			st.error(str(error))
 		else:
-			st.info("No action items identified in this meeting.")
+			st.subheader("Meeting Summary")
+			st.write(result["summary"])
 
-		st.subheader("Full Meeting Report")
-		st.markdown(result["final_report"])
+			st.subheader("Key Topics")
+			for n, topic in enumerate(result["topics"], 1):
+				st.write(f"{n}. {topic}")
+
+			st.subheader("Action Items and Owners")
+			if result["action_items"]:
+				st.table(result["action_items"])
+				level = result["priority"]
+				st.subheader("Priority Level")
+				{"High Priority": st.error, "Medium Priority": st.warning, "Low Priority": st.success}[level](level)
+				st.caption(result["priority_reason"])
+			else:
+				st.info("No action items identified in this meeting.")
+
+			st.subheader("Full Meeting Report")
+			st.markdown(result["final_report"])

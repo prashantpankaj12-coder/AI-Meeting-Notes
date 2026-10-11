@@ -27,6 +27,22 @@ def _read_env_value(name: str, default: str | None = None) -> str | None:
             os.environ[name] = normalized
             return normalized
 
+    try:
+        import streamlit as st
+        from streamlit.errors import StreamlitSecretNotFoundError
+    except ImportError:
+        return default
+
+    try:
+        value_from_secrets = st.secrets.get(name)
+    except StreamlitSecretNotFoundError:
+        return default
+
+    if isinstance(value_from_secrets, str):
+        normalized = value_from_secrets.strip()
+        if normalized and normalized.lower() not in {v.lower() for v in _PLACEHOLDER_VALUES}:
+            return normalized
+
     return default
 
 
@@ -37,7 +53,8 @@ def get_llm(model: str | None = None, **kwargs):
     api_key = _read_env_value("OPENAI_API_KEY")
     if not api_key:
         raise ValueError(
-            "OPENAI_API_KEY is not set. Add it to your environment or a .env file before running the notebook."
+            "OPENAI_API_KEY is not set. Add it to Streamlit Cloud app Settings > Secrets, "
+            "your environment, or a local .env file."
         )
 
     model_name = model or _read_env_value("OPENAI_MODEL", "gpt-4o-mini")

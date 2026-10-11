@@ -11,3 +11,14 @@ def test_get_llm_reads_env(monkeypatch):
     assert llm.model_name == "gpt-4o-mini"
     assert llm.openai_api_key.get_secret_value() != "test-key"
     assert llm.openai_api_key.get_secret_value().startswith("sk-")
+
+
+def test_read_env_value_falls_back_to_streamlit_secrets(monkeypatch):
+    import streamlit as st
+    import llm
+
+    monkeypatch.setenv("OPENAI_API_KEY", "")
+    monkeypatch.setattr(llm, "dotenv_values", lambda _: {})
+    monkeypatch.setattr(st, "secrets", {"OPENAI_API_KEY": "sk-streamlit-test"})
+
+    assert llm._read_env_value("OPENAI_API_KEY") == "sk-streamlit-test"
